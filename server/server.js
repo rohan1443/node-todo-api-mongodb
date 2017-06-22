@@ -1,65 +1,27 @@
-const mongoose = require('mongoose');
+const express = require('express');
+const bodyParser = require('body-parser');
 
-mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost:27017/TodoApp')
+let {mongoose} = require('./db/mongoose');
+let {Todo} = require('./models/todo');
+let {User} = require('./models/user');
 
-var User = mongoose.model("user", {
-  email: {
-    type: String,
-    required: true,
-    trim: true,
-    minlength: 1
-  }
+let app = express();
+
+// using a middleware for parsing the body... string form client to JSON while sending to the server
+app.use(bodyParser.json())
+
+app.post('/todos', (req, res) => {
+  let newTodo = new Todo({
+    text: req.body.text
+  })
+
+  newTodo.save().then((doc) => {
+    res.send(doc)
+  }, (err) => {
+    res.status(400).send(err);
+  })
 })
 
-let newUser = new User({
-  email: 'rohan1443@gmail.com'
+app.listen(3000 , () => {
+  console.log("server started")
 })
-
-newUser.save().then((doc) => {
-  console.log(doc)
-}, (err) => {
-  console.log('Unable to save', err)
-})
-
-//creating the constructor
-//mongoose validators and schemas
-var Todo = mongoose.model("Todo", {
-  text :{
-    type: String,
-    required: true,
-    trim: true,
-    minlength: 1
-  },
-  completed: {
-    type: Boolean,
-    default: false
-  },
-  completedAt: {
-    type: Number,
-    default: null
-  }
-})
-
-//creating an instance... so called the collection
-// let newTodo = new Todo({
-//   text: 'Cook dinner'
-// })
-
-// newTodo.save().then((doc) => {
-//   console.log('Saved Todo', doc)
-// }, (err) => {
-//   console.log('Unable to save Todo')
-// })
-
-// let otherTodo = new Todo({
-//   text: 'Feeling Sleepy'
-// })
-
-// otherTodo.save().then((newDoc)=> {
-// console.log(newDoc)
-// }, (err) => {
-//   console.log("Unable to save", err)
-// })
-
-mongoose.connection.close()
