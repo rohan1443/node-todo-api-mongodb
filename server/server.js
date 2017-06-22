@@ -3,17 +3,41 @@ const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 mongoose.connect('mongodb://localhost:27017/TodoApp')
 
+var User = mongoose.model("user", {
+  email: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 1
+  }
+})
+
+let newUser = new User({
+  email: 'rohan1443@gmail.com'
+})
+
+newUser.save().then((doc) => {
+  console.log(doc)
+}, (err) => {
+  console.log('Unable to save', err)
+})
 
 //creating the constructor
+//mongoose validators and schemas
 var Todo = mongoose.model("Todo", {
   text :{
-    type: String
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 1
   },
   completed: {
-    type: Boolean
+    type: Boolean,
+    default: false
   },
   completedAt: {
-    type: Number
+    type: Number,
+    default: null
   }
 })
 
@@ -28,16 +52,14 @@ var Todo = mongoose.model("Todo", {
 //   console.log('Unable to save Todo')
 // })
 
-let otherTodo = new Todo({
-  text: 'My name is Rohan',
-  completed: true,
-  completedAt: 123
-})
+// let otherTodo = new Todo({
+//   text: 'Feeling Sleepy'
+// })
 
-otherTodo.save().then((newDoc)=> {
-console.log(newDoc)
-}, (err) => {
-  console.log("Unable to save")
-})
+// otherTodo.save().then((newDoc)=> {
+// console.log(newDoc)
+// }, (err) => {
+//   console.log("Unable to save", err)
+// })
 
 mongoose.connection.close()
