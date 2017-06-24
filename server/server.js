@@ -7,6 +7,7 @@ let { Todo } = require('./models/todo');
 let { User } = require('./models/user');
 
 let app = express();
+const port  = process.env.PORT || 3000;
 
 // using a middleware for parsing the body... string form client to JSON while sending to the server
 app.use(bodyParser.json())
@@ -52,6 +53,6 @@ app.get('/todos/:id', (req, res) => {
 })
 
 
-app.listen(3000, () => {
-  console.log("server started")
+app.listen(port, () => {
+  console.log(`Started the server on port ${port}`)
 })
