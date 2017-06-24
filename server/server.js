@@ -6,12 +6,40 @@ const _ = require('lodash');
 let { mongoose } = require('./db/mongoose');
 let { Todo } = require('./models/todo');
 let { User } = require('./models/user');
+let { authenticate } = require('./middleware/authenticate');
 
 let app = express();
 const port = process.env.PORT || 3000;
 
 // using a middleware for parsing the body... string form client to JSON while sending to the server
 app.use(bodyParser.json())
+
+//Setting up the POST request for USER
+app.post('/users', (req, res) => {
+  let body = _.pick(req.body, ['email', 'password'])
+  let user = new User(body);
+
+  user.save().then(() => {
+    return user.generateAuthToken()
+  }).then((token) => {
+    res.header('x-auth', token).send(user)
+  }, (err) => {
+    res.send(err)
+  }).catch((e) => {
+    res.status(400).send(e)
+  })
+
+  // newUser.save().then((doc) => {
+  //   res.status(200).send(doc)
+  // }).catch((e) => {
+  //   res.status(400).send(e)
+  // })
+})
+
+//setting up a private route and middleware
+app.get('/users/me', authenticate, (req, res) => {
+  res.send(req.user)
+})
 
 
 //setting up the POST request for TODO
@@ -25,30 +53,6 @@ app.post('/todos', (req, res) => {
   }, (err) => {
     res.status(400).send(err);
   })
-})
-
-//Setting up the POST request for USER
-app.post('/users', (req, res) => {
-  let body = _.pick(req.body,['email', 'password'])
-  let user = new User(body);
-
-  // newUser.save().then((doc) => {
-  //   res.status(200).send(doc)
-  // }).catch((e) => {
-  //   res.status(400).send(e)
-  // })
-
-
-user.save().then((user) => {
-    return user.generateAuthToken()
-  }).then((token) => {
-    res.header('x-auth', token).send(user)
-  },(err) => {
-    res.send(err)
-  }).catch((e) => {
-    res.status(400).send(e)
-  })
-
 })
 
 //setting up the GET request
@@ -113,8 +117,8 @@ app.patch('/todos/:id', (req, res) => {
     if (!todo) {
       return res.status(404).send()
     }
-    res.status(200).send({todo})
-debugger;
+    res.status(200).send({ todo })
+    debugger;
   }).catch((e) => {
     res.status(400).send()
   })

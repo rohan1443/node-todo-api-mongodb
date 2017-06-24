@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 var UserSchema = mongoose.Schema({
   email: {
@@ -10,7 +11,7 @@ var UserSchema = mongoose.Schema({
     trim: true,
     minlength: 1,
     unique: true,
-    validate:{
+    validate: {
       validator: (value) => {
         validator.isEmail(value)
       },
@@ -22,8 +23,8 @@ var UserSchema = mongoose.Schema({
     required: true,
     minlength: 6
   },
-  tokens:[{
-    access :{
+  tokens: [{
+    access: {
       type: String,
       required: true
     },
@@ -34,29 +35,65 @@ var UserSchema = mongoose.Schema({
   }]
 })
 
-UserSchema.methods.toJSON = function() {
+UserSchema.methods.toJSON = function () {
   var user = this;
   var userObject = user.toObject();
 
   return _.pick(userObject, ['_id', 'email'])
 }
 
-UserSchema.methods.generateAuthToken = function() {
+UserSchema.methods.generateAuthToken = function () {
   var user = this;
   var access = 'auth';
-  var token = jwt.sign({_id:user._id.toHexString(), access}, 'abc123').toString();
+  var token = jwt.sign({ _id: user._id.toHexString(), access }, 'abc123').toString();
 
-  user.tokens.push({access, token})
-  
+  user.tokens.push({ access, token })
+
   return user.save().then(() => {
     return token
+  })
+}
+
+UserSchema.statics.findByToken = function (token) {
+  var User = this;
+  var decoded;
+
+  try {
+    decoded = jwt.verify(token, 'abc123') 
+  } catch (error) {
+    // return new Promise((resolve, reject) => {
+    //   reject();
+    // })
+    return Promise.reject();
+  }
+
+  return User.findOne({
+    '_id': decoded._id,
+    'tokens.token': token,
+    'tokens.access': 'auth'
   })
 
 }
 
+UserSchema.pre('save', (next) => {
+  var user = this;
+
+  if(this.isModified("password")) {
+    bcrypt.genSalt(10, (err, salt) => {
+      bcrypt.hash(user.password, salt, (err, hash) => {
+        user.password = hash;
+        next()
+      })
+    })
+  } else {
+    next()
+  }
+
+})
+
 var User = mongoose.model("user", UserSchema)
 
-module.exports = {User};
+module.exports = { User };
 
 
 //sample email and password object 
