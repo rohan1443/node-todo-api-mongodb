@@ -93,6 +93,15 @@ app.get('/todos/:id', (req, res) => {
   })
 })
 
+//Setting up remove a token
+app.delete('/users/me/token', authenticate, (req, res) => {
+  req.user.removeToken(req.token).then(() => {
+    res.status(200).send()
+  },(err) => {
+    res.status(400).send()
+  })
+})
+
 //Setting up a DELETE request by id
 app.delete('/todos/:id', (req, res) => {
   let id = req.params.id;
